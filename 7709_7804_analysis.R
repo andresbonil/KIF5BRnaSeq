@@ -6,7 +6,7 @@ library(Glimma)
 library(biomaRt)
 wd <- getwd()
 
-#7709
+#7709 readin/map
 data <- read.delim("7709_counts.txt", row.names = NULL, stringsAsFactors = FALSE)
 
 #Find external gene names from gene_id
@@ -29,7 +29,7 @@ sortdata$`sortnames$external_gene_name` <- make.unique(sortdata$`sortnames$exter
 rownames(sortdata) <- sortdata$`sortnames$external_gene_name`
 count.data <- sortdata[3:9]
 
-#7804
+#7804 readin/map
 data <- read.delim("7804_counts.txt", row.names = NULL, stringsAsFactors = FALSE)
 
 #Find external gene names from gene_id
@@ -56,132 +56,25 @@ countpool <- cbind(count.data, count.data.2)
 
 grouppool <- c('WT', 'WT_si5B1', 'WT_si5B2', 'WT_si1B1', 'WT_si1B4', 'WT_siScramble', 'KIF5BKO', 'WT', 'WT_si5B1', 'WT_si5B2', 'WT_si1B1', 'WT_si1B4', 'WT_siScramble', 'KIF5BKO')
 experimentpool <- c('one','one','one','one','one','one','one','two','two','two','two','two','two','two')
-group <- c('1_1', '1_2', '1_3', '1_4', '1_5', '1_6', '1_7')
-group.2 <- c('2_1', '2_2', '2_3', '2_4', '2_5', '2_6', '2_7')
-
-dge.set <- DGEList(counts = count.data,
-                   samples = group,
-                   genes = sortdata[-c(2:9)])
-dge.set.2 <- DGEList(counts = count.data.2,
-                   samples = group.2,
-                   genes = sortdata[-c(2:9)])
 dge.set.3 <- DGEList(counts = countpool,
                      group = experimentpool,
                      samples = grouppool,
                      genes = sortdata[-c(2:9)])
+samplenamespool <- paste(gsub('_','',substr(colnames(dge.set.3),1,8)),grouppool,sep='_')
 
-samplenames <- paste(gsub('_','',substr(colnames(dge.set),1,8)),group,sep='_')
-samplenames2 <- paste(gsub('_','',substr(colnames(dge.set.2),1,8)),group,sep='_')
-samplenamespool <- paste(gsub('_','',substr(colnames(dge.set.3),1,8)),group,sep='_')
-
-lcpm.prefilter <- cpm(dge.set,log=T)
-lcpm.prefilter.2 <- cpm(dge.set.2,log=T)
 lcpm.prefilter.3 <- cpm(dge.set.3, log=T)
-
-L <- mean(dge.set$samples$lib.size) * 1e-6
-M <- median(dge.set$samples$lib.size) * 1e-6
-c(L, M)
-summary(lcpm.prefilter)
-
-L <- mean(dge.set.2$samples$lib.size) * 1e-6
-M <- median(dge.set.2$samples$lib.size) * 1e-6
-c(L, M)
-summary(lcpm.prefilter.2)
 
 L <- mean(dge.set.3$samples$lib.size) * 1e-6
 M <- median(dge.set.3$samples$lib.size) * 1e-6
 c(L, M)
 summary(lcpm.prefilter.3)
 
-
-table(rowSums(dge.set$counts==0)==7)
-table(rowSums(dge.set.2$counts==0)==7)
 table(rowSums(dge.set.3$counts==0)==14)
-
-keep.exprs <- filterByExpr(dge.set, group=group)
-x <- dge.set[keep.exprs,, keep.lib.sizes=FALSE]
-dim(dge.set)
-dim(x)
-
-keep.exprs <- filterByExpr(dge.set.2, group=group)
-y <- dge.set.2[keep.exprs,, keep.lib.sizes=FALSE]
-dim(dge.set.2)
-dim(y)
-
 
 keep.exprs <- filterByExpr(dge.set.3, group=grouppool)
 z <- dge.set.3[keep.exprs,, keep.lib.sizes=FALSE]
 dim(dge.set.3)
 dim(z)
-
-#7709 QC figures  
-
-lcpm.cutoff <- log2(10/M + 2/L)
-nsamples <- ncol(x)
-col <- brewer.pal(nsamples, "Paired")
-par(mfrow=c(1,2))
-plot(density(lcpm.prefilter[,1]), col=col[1], lwd=2, ylim=c(0,0.26), las=2, main="", xlab="")
-title(main="A. Raw data", xlab="Log-cpm")
-abline(v=lcpm.cutoff, lty=3)
-for (i in 2:nsamples){
-  den <- density(lcpm.prefilter[,i])
-  lines(den$x, den$y, col=col[i], lwd=2)
-}
-
-lcpm <- cpm(x, log=TRUE)
-plot(density(lcpm[,1]), col=col[1], lwd=2, ylim=c(0,0.26), las=2, main="", xlab="")
-title(main="B. Filtered data", xlab="Log-cpm")
-abline(v=lcpm.cutoff, lty=3)
-for (i in 2:nsamples){
-  den <- density(lcpm[,i])
-  lines(den$x, den$y, col=col[i], lwd=2)
-}
-x <- calcNormFactors(x, method = "TMM")
-x$samples$norm.factors 
-
-#7709 MDS plot
-group.index <- rep(0,length(group))
-for(i in 1:length(unique(group))){
-  group.index[which(group==unique(group)[i])] <- i
-}
-glMDSPlot(lcpm, top=NULL, groups=group, labels=samplenames, html='All_Genes', folder='MDS_Plots', launch=TRUE)
-glMDSPlot(lcpm, top=500, groups=group, gene.selection='common', folder='MDS_Plots',
-          labels=samplenames, html='Top500_variable_genes', launch=TRUE)
-
-#7804 QC figures 
-
-lcpm.cutoff <- log2(10/M + 2/L)
-nsamples <- ncol(y)
-col <- brewer.pal(nsamples, "Paired")
-par(mfrow=c(1,2))
-plot(density(lcpm.prefilter.2[,1]), col=col[1], lwd=2, ylim=c(0,0.26), las=2, main="", xlab="")
-title(main="A. Raw data", xlab="Log-cpm")
-abline(v=lcpm.cutoff, lty=3)
-for (i in 2:nsamples){
-  den <- density(lcpm.prefilter.2[,i])
-  lines(den$x, den$y, col=col[i], lwd=2)
-}
-
-lcpm <- cpm(y, log=TRUE)
-plot(density(lcpm[,1]), col=col[1], lwd=2, ylim=c(0,0.26), las=2, main="", xlab="")
-title(main="B. Filtered data", xlab="Log-cpm")
-abline(v=lcpm.cutoff, lty=3)
-for (i in 2:nsamples){
-  den <- density(lcpm[,i])
-  lines(den$x, den$y, col=col[i], lwd=2)
-}
-x <- calcNormFactors(y, method = "TMM")
-x$samples$norm.factors 
-
-#7804 MDS plot 
-group.index <- rep(0,length(group.2))
-for(i in 1:length(unique(group.2))){
-  group.index[which(group.2==unique(group.2)[i])] <- i
-}
-glMDSPlot(lcpm, top=NULL, groups=group.2, labels=samplenames, html='All_Genes', folder='MDS_Plots', launch=TRUE)
-glMDSPlot(lcpm, top=500, groups=group.2, gene.selection='common', folder='MDS_Plots',
-          labels=samplenames, html='Top500_variable_genes', launch=TRUE)
-
 
 #Pooled QC figures 
 
@@ -211,7 +104,7 @@ z$samples$norm.factors
 #Pooled MDS plot 
 group.index <- rep(0,length(grouppool))
 for(i in 1:length(unique(grouppool))){
-  group.index[which(group.2==unique(grouppool)[i])] <- i
+  group.index[which(grouppool==unique(grouppool)[i])] <- i
 }
 glMDSPlot(lcpm, top=NULL, groups=grouppool, labels=samplenamespool, html='All_Genes', folder='MDS_Plots', launch=TRUE)
 glMDSPlot(lcpm, top=500, groups=grouppool, gene.selection='common', folder='MDS_Plots',
@@ -219,11 +112,7 @@ glMDSPlot(lcpm, top=500, groups=grouppool, gene.selection='common', folder='MDS_
 
 #Differential Expression 
 
-design <- model.matrix(~0+group)
-design2 <- model.matrix(~0+group.2)
 designpool <- model.matrix(~0+grouppool+experimentpool)
-colnames(design) <- gsub("group1_", "f", colnames(design))
-colnames(design2) <- gsub("group.22_" ,"s", colnames(design2))
 colnames (designpool) <- gsub("grouppool", "", colnames(designpool))
 contr.matrix <- makeContrasts(
   WTvsWT_si5B1 = WT - WT_si5B1,
