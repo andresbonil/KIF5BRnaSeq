@@ -1,4 +1,3 @@
-library(gplots)
 library(Rsubread)
 library(edgeR)
 library(RColorBrewer)
@@ -53,6 +52,10 @@ rownames(sortdata) <- sortdata$`sortnames$external_gene_name`
 count.data.2 <- sortdata[3:9]
 
 countpool <- cbind(count.data, count.data.2)
+
+#start here
+countpool <- readRDS(file = "countpool.rds")
+sortdata <- readRDS(file = "sortdata.rds")
 
 grouppool <- c('WT', 'WT_si5B1', 'WT_si5B2', 'WT_si1B1', 'WT_si1B4', 'WT_siScramble', 'KIF5BKO', 'WT', 'WT_si5B1', 'WT_si5B2', 'WT_si1B1', 'WT_si1B4', 'WT_siScramble', 'KIF5BKO')
 experimentpool <- c('one','one','one','one','one','one','one','two','two','two','two','two','two','two')
@@ -115,12 +118,12 @@ glMDSPlot(lcpm, top=500, groups=grouppool, gene.selection='common', folder='MDS_
 designpool <- model.matrix(~0+grouppool+experimentpool)
 colnames (designpool) <- gsub("grouppool", "", colnames(designpool))
 contr.matrix <- makeContrasts(
-  WTvsWT_si5B1 = WT - WT_si5B1,
-  WTvsWT_si5B2 = WT - WT_si5B2,
-  WTvsWT_si1B1 = WT - WT_si1B1,
-  WTvsWT_si1B4 = WT - WT_si1B4,
-  WTvsWT_siScramble = WT - WT_siScramble,
-  WTvsKIF5BKO = WT - KIF5BKO,
+  WT_si5B1vsWT = WT_si5B1 - WT,
+  WT_si5B2vsWT = WT_si5B2 - WT,
+  WT_si1B1vsWT = WT_si1B1 - WT,
+  WT_si1B4vsWT = WT_si1B4 - WT,
+  WT_siScramblevsWT = WT_siScramble - WT,
+  KIF5BKOvsWT = KIF5BKO - WT,
   WT_si5B1vsWT_si5B2 = WT_si5B1 - WT_si5B2,
   WT_si5B1vsWT_si1B1 = WT_si5B1 - WT_si1B1,
   WT_si5B1vsWT_si1B4 = WT_si5B1 - WT_si1B4,
@@ -151,12 +154,12 @@ dt <- decideTests(tfit)
 summary(dt)
 
 plotMD(tfit, column=1, status=dt[,1], main=colnames(tfit)[1], xlim=c(-8,13))
-glMDPlot(tfit, coef=1, status=dt, main=colnames(tfit)[1], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE)
-glMDPlot(tfit, coef=2, status=dt, main=colnames(tfit)[2], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE)
-glMDPlot(tfit, coef=3, status=dt, main=colnames(tfit)[3], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE)
-glMDPlot(tfit, coef=4, status=dt, main=colnames(tfit)[4], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE)
-glMDPlot(tfit, coef=5, status=dt, main=colnames(tfit)[5], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE)
-glMDPlot(tfit, coef=6, status=dt, main=colnames(tfit)[6], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE)
+glMDPlot(tfit, coef=1, status=dt, main=colnames(tfit)[1], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE, html = "WT_si5B1vsWT")
+glMDPlot(tfit, coef=2, status=dt, main=colnames(tfit)[2], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE, html = "WT_si5B2vsWT")
+glMDPlot(tfit, coef=3, status=dt, main=colnames(tfit)[3], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE, html = "WT_si1B1vsWT")
+glMDPlot(tfit, coef=4, status=dt, main=colnames(tfit)[4], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE, html = "WT_si1B4vsWT")
+glMDPlot(tfit, coef=5, status=dt, main=colnames(tfit)[5], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE, html = "WT_siScramblevsWT")
+glMDPlot(tfit, coef=6, status=dt, main=colnames(tfit)[6], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE, html = "KIF5BKOvsWT")
 glMDPlot(tfit, coef=7, status=dt, main=colnames(tfit)[7], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE)
 glMDPlot(tfit, coef=8, status=dt, main=colnames(tfit)[8], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE)
 glMDPlot(tfit, coef=9, status=dt, main=colnames(tfit)[9], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE)
@@ -172,4 +175,3 @@ glMDPlot(tfit, coef=18, status=dt, main=colnames(tfit)[18], side.main="GeneName"
 glMDPlot(tfit, coef=19, status=dt, main=colnames(tfit)[19], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE)
 glMDPlot(tfit, coef=20, status=dt, main=colnames(tfit)[20], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE)
 glMDPlot(tfit, coef=21, status=dt, main=colnames(tfit)[21], side.main="GeneName", counts=lcpm, groups=grouppool, launch=TRUE)
-
